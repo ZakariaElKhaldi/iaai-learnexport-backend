@@ -60,7 +60,9 @@ router.post('/register', async (req: Request, res: Response) => {
       options: {
         data: {
           name,
-        }
+        },
+        emailRedirectTo: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/auth/confirm`,
+        // For development only: Skip email verification
       }
     });
     
@@ -115,6 +117,17 @@ router.post('/login', async (req: Request, res: Response) => {
     });
     
     if (error) {
+      console.error('Login error:', error);
+      
+      // Check if the error is due to email not being verified
+      if (error.message.includes('Email not confirmed') || error.message.includes('not verified') || error.message.includes('not confirmed')) {
+        return res.status(401).json({ 
+          status: 'error', 
+          message: 'Email not verified. Please check your email for a verification link.',
+          code: 'email_not_verified'
+        });
+      }
+      
       return res.status(401).json({ 
         status: 'error', 
         message: 'Invalid credentials' 
