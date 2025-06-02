@@ -1,5 +1,14 @@
 import { Request, Response, NextFunction } from 'express';
-import { supabase } from '../index';
+import { createClient } from '@supabase/supabase-js';
+import dotenv from 'dotenv';
+
+// Load environment variables
+dotenv.config();
+
+// Initialize Supabase client
+const supabaseUrl = process.env.SUPABASE_URL || '';
+const supabaseKey = process.env.SUPABASE_KEY || '';
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 export interface AuthRequest extends Request {
   user?: any;

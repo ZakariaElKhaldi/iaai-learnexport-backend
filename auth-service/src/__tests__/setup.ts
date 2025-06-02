@@ -48,6 +48,13 @@ jest.mock('@supabase/supabase-js', () => {
   };
 });
 
+// Add a simple test to avoid the "no tests" error
+describe('Test environment', () => {
+  test('NODE_ENV is set to test', () => {
+    expect(process.env.NODE_ENV).toBe('test');
+  });
+});
+
 // Global afterAll
 afterAll(async () => {
   // Clean up resources after all tests
