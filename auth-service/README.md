@@ -1,42 +1,41 @@
 # Auth Service
 
-This microservice handles authentication and user management for the LearnExpert platform using Express.js, TypeScript, and Supabase.
+Authentication and authorization microservice for the IAAI Learning Platform.
 
-## Features
+## Overview
 
+This service handles:
 - User registration
-- User login
-- User logout
-- User profile management
-- JWT-based authentication
-- Protected routes
+- User login/logout
+- Token validation
+- Protected route access
+- Integration with Supabase Auth
 
-## Tech Stack
+## Technology Stack
 
-- Node.js
-- Express.js
 - TypeScript
-- Supabase (Authentication & Database)
+- Express.js
+- Supabase Auth
+- Jest (testing)
 - Docker
 
-## Setup
+## Local Development
 
 ### Prerequisites
 
-- Node.js 18+
-- Docker and Docker Compose
+- Node.js v16+
+- npm or yarn
 - Supabase account and project
 
-### Environment Variables
+### Environment Setup
 
-Create a `.env` file in the root directory with the following variables:
+Create a `.env` file in the root of this directory:
 
 ```
-NODE_ENV=development
+SUPABASE_URL=https://your-supabase-project.supabase.co
+SUPABASE_KEY=your-supabase-service-role-key
+JWT_SECRET=your-jwt-secret
 PORT=3000
-SUPABASE_URL=your_supabase_url
-SUPABASE_KEY=your_supabase_key
-JWT_SECRET=your_jwt_secret_key
 ```
 
 ### Installation
@@ -45,36 +44,146 @@ JWT_SECRET=your_jwt_secret_key
 # Install dependencies
 npm install
 
-# Run in development mode
-npm run dev
-
-# Build for production
+# Build TypeScript
 npm run build
 
-# Run in production mode
-npm start
+# Run development server
+npm run dev
 ```
 
-### Docker
+## Testing
+
+This service uses Jest for testing. The tests are located in the `src/__tests__` directory.
+
+### Running Tests
 
 ```bash
-# Build the Docker image
-docker build -t auth-service .
+# Run all tests
+npm test
 
-# Run the container
-docker run -p 3000:3000 auth-service
+# Run tests with watch mode
+npm run test:watch
+
+# Generate test coverage report
+npm run test:coverage
+```
+
+### Test Structure
+
+- `src/__tests__/routes/`: Tests for API routes
+- `src/__tests__/middleware/`: Tests for middleware functions
+- `src/__tests__/`: General tests
+
+### Writing Tests
+
+When writing tests:
+1. Use descriptive test names
+2. Mock external dependencies (Supabase)
+3. Test both success and failure cases
+4. Test edge cases
+
+Example:
+
+```typescript
+describe('Auth Routes', () => {
+  it('should register a new user successfully', async () => {
+    // Test code here
+  });
+  
+  it('should return 400 with invalid input', async () => {
+    // Test code here
+  });
+});
 ```
 
 ## API Endpoints
 
-### Authentication
+### POST /auth/register
 
-- `POST /register` - Register a new user
-- `POST /login` - Login a user
-- `POST /logout` - Logout a user
-- `GET /me` - Get current user info (protected)
-- `GET /protected` - Example protected route
+Register a new user.
 
-## License
+**Request:**
+```json
+{
+  "email": "user@example.com",
+  "password": "securepassword",
+  "username": "username",
+  "fullName": "Full Name"
+}
+```
 
-MIT 
+**Response:**
+```json
+{
+  "user": {
+    "id": "user-id",
+    "email": "user@example.com",
+    "username": "username"
+  },
+  "token": "jwt-token"
+}
+```
+
+### POST /auth/login
+
+Login with email and password.
+
+**Request:**
+```json
+{
+  "email": "user@example.com",
+  "password": "securepassword"
+}
+```
+
+**Response:**
+```json
+{
+  "user": {
+    "id": "user-id",
+    "email": "user@example.com"
+  },
+  "token": "jwt-token"
+}
+```
+
+### POST /auth/logout
+
+Logout the current user.
+
+**Headers:**
+```
+Authorization: Bearer jwt-token
+```
+
+**Response:**
+```json
+{
+  "message": "Logged out successfully"
+}
+```
+
+### GET /auth/me
+
+Get the current user's profile.
+
+**Headers:**
+```
+Authorization: Bearer jwt-token
+```
+
+**Response:**
+```json
+{
+  "user": {
+    "id": "user-id",
+    "email": "user@example.com",
+    "username": "username",
+    "fullName": "Full Name"
+  }
+}
+```
+
+## Database Integration
+
+This service uses Supabase for authentication and database operations. See the `DB-SETUP-README.md` file for details on the database schema and setup. 
