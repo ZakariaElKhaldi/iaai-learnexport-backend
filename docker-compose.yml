@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  # API Gateway with NGINX
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    ports:
+      - "8080:80"
+    networks:
+      - microservices-network
+    depends_on:
+      - auth-service
+    # Uncomment when other services are implemented
+    # - courses-service
+    # - user-service
+
+  # Auth Service (IAM) - Using Express.js and Supabase
+  auth-service:
+    build:
+      context: ./auth-service
+      dockerfile: Dockerfile
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      # Add Supabase environment variables here
+      - SUPABASE_URL=your_supabase_url
+      - SUPABASE_KEY=your_supabase_key
+    networks:
+      - microservices-network
+    volumes:
+      - ./auth-service:/app
+      - /app/node_modules
+
+  # Courses Service - To be implemented later
+  # courses-service:
+  #   build:
+  #     context: ./courses-service
+  #     dockerfile: Dockerfile
+  #   environment:
+  #     - NODE_ENV=development
+  #     - PORT=3001
+  #   networks:
+  #     - microservices-network
+  #   volumes:
+  #     - ./courses-service:/app
+  #     - /app/node_modules
+
+  # User Service - To be implemented later
+  # user-service:
+  #   build:
+  #     context: ./user-service
+  #     dockerfile: Dockerfile
+  #   environment:
+  #     - NODE_ENV=development
+  #     - PORT=3002
+  #   networks:
+  #     - microservices-network
+  #   volumes:
+  #     - ./user-service:/app
+  #     - /app/node_modules
+
+networks:
+  microservices-network:
+    driver: bridge 
