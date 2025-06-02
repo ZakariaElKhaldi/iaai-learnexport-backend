@@ -22,9 +22,6 @@ services:
       - JWT_SECRET=${JWT_SECRET}
     ports:
       - "3000:3000"
-    volumes:
-      - ./auth-service:/app
-      - /app/node_modules
     networks:
       - backend-network
 

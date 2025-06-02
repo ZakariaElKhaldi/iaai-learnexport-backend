@@ -38,42 +38,121 @@ backend/
 - Node.js 18+ (for local development)
 - Supabase account and project
 
-### Setup
+### Setup Environment Variables
 
-1. Clone the repository
-2. Configure environment variables:
-   - Create `.env` files in each service directory based on the provided `.env.example` files
-3. Start the services:
+1. Create a `.env` file in the root of the `backend` directory with the following contents:
+
+```
+NODE_ENV=development
+PORT=3000
+
+# Supabase configuration
+SUPABASE_URL=your_supabase_url
+SUPABASE_KEY=your_supabase_key
+
+# JWT configuration
+JWT_SECRET=your_jwt_secret
+```
+
+Replace the placeholder values with your actual Supabase credentials.
+
+### Running with Docker Compose
+
+1. Start the services:
 
 ```bash
 cd backend
-docker-compose up
+sudo docker compose up -d
 ```
 
-This will start all services defined in the `docker-compose.yml` file.
+2. Check if the services are running:
 
-### Accessing the Services
+```bash
+sudo docker compose ps
+```
+
+You should see both the `backend-nginx-1` and `backend-auth-service-1` containers running.
+
+### Stopping the Services
+
+```bash
+cd backend
+sudo docker compose down
+```
+
+## Accessing the Services
 
 - API Gateway: http://localhost:8080
-- Auth Service: http://localhost:8080/api/auth
-- Courses Service: http://localhost:8080/api/courses (when implemented)
-- User Service: http://localhost:8080/api/users (when implemented)
+- Auth Service: http://localhost:3000
+- Auth Service via Gateway: http://localhost:8080/api/auth
+
+### Available Endpoints
+
+#### API Gateway
+- `GET /` - Returns a welcome message from the gateway
+
+#### Auth Service
+- `GET /health` - Health check endpoint (returns status 200 if service is up)
+- `POST /register` - Register a new user
+- `POST /login` - Sign in with email and password
+- `POST /logout` - Sign out the current user
+- `GET /me` - Get current user info (protected route)
+- `GET /protected` - Example of a protected route
+
+### Testing the Services
+
+1. Test the API Gateway:
+
+```bash
+curl http://localhost:8080
+```
+Expected response: `LearnExpert API Gateway`
+
+2. Test the Auth Service health check:
+
+```bash
+curl http://localhost:8080/api/auth/health
+```
+Expected response: `{"status":"ok","service":"auth-service"}`
+
+3. Test user registration (note: may fail if Supabase setup is incomplete):
+
+```bash
+curl -X POST -H "Content-Type: application/json" http://localhost:8080/api/auth/register -d '{"email":"test@example.com", "password":"password123", "name":"Test User"}'
+```
 
 ## Development Workflow
 
 Each microservice can be developed independently:
 
 1. Make changes to the service code
-2. Rebuild the Docker image: `docker-compose build <service-name>`
-3. Restart the service: `docker-compose up -d <service-name>`
+2. Rebuild the Docker image: `sudo docker compose build <service-name>`
+3. Restart the service: `sudo docker compose up -d <service-name>`
 
-## Adding New Microservices
+## Troubleshooting
 
-To add a new microservice:
+### Viewing Container Logs
 
-1. Create a new directory for the service
-2. Add the service configuration to `docker-compose.yml`
-3. Configure the NGINX API gateway to route requests to the new service
+To view logs for a specific service:
+
+```bash
+sudo docker logs backend-auth-service-1
+sudo docker logs backend-nginx-1
+```
+
+### Testing Supabase Connection
+
+To test if your Supabase connection is working correctly:
+
+```bash
+node auth-service/test-connection.js
+```
+
+### Common Issues
+
+1. **Permission denied errors**: Make sure you're using `sudo` with Docker commands if not in the Docker group
+2. **Database connection issues**: Verify your Supabase URL and key in the `.env` file
+3. **NGINX gateway errors**: Check the NGINX configuration in `nginx/default.conf`
 
 ## License
 
