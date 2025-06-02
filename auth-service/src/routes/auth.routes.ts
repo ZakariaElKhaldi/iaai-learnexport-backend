@@ -18,8 +18,8 @@ function isValidEmail(email: string): boolean {
   const allowedTestDomains = ['gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com'];
   const domain = email.split('@')[1];
   
-  // example.com domain is not allowed by Supabase
-  if (domain === 'example.com') {
+  // Check if domain is in the allowed list
+  if (!allowedTestDomains.includes(domain)) {
     return false;
   }
   
