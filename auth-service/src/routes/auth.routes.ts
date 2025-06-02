@@ -5,6 +5,27 @@ import { isAuthenticated, AuthRequest } from '../middleware/auth.middleware';
 
 const router = express.Router();
 
+// Basic email validation
+function isValidEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  
+  // Check basic format
+  if (!emailRegex.test(email)) {
+    return false;
+  }
+  
+  // Add allowed domains for testing
+  const allowedTestDomains = ['gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com'];
+  const domain = email.split('@')[1];
+  
+  // example.com domain is not allowed by Supabase
+  if (domain === 'example.com') {
+    return false;
+  }
+  
+  return true;
+}
+
 // Register a new user
 router.post('/register', async (req: Request, res: Response) => {
   try {
@@ -14,6 +35,21 @@ router.post('/register', async (req: Request, res: Response) => {
       return res.status(400).json({ 
         status: 'error', 
         message: 'Email and password are required' 
+      });
+    }
+    
+    // Validate email format before sending to Supabase
+    if (!isValidEmail(email)) {
+      return res.status(400).json({ 
+        status: 'error', 
+        message: 'Invalid email format or domain. Please use a valid email address.' 
+      });
+    }
+    
+    if (password.length < 8) {
+      return res.status(400).json({ 
+        status: 'error', 
+        message: 'Password must be at least 8 characters long' 
       });
     }
     
@@ -29,6 +65,7 @@ router.post('/register', async (req: Request, res: Response) => {
     });
     
     if (error) {
+      console.error('Supabase registration error:', error);
       return res.status(400).json({ 
         status: 'error', 
         message: error.message 
@@ -60,6 +97,14 @@ router.post('/login', async (req: Request, res: Response) => {
       return res.status(400).json({ 
         status: 'error', 
         message: 'Email and password are required' 
+      });
+    }
+    
+    // Validate email format
+    if (!isValidEmail(email)) {
+      return res.status(400).json({ 
+        status: 'error', 
+        message: 'Invalid email format or domain' 
       });
     }
     
@@ -135,6 +180,14 @@ router.get('/me', isAuthenticated, async (req: AuthRequest, res: Response) => {
       message: 'An error occurred while fetching user data' 
     });
   }
+});
+
+// Health check endpoint
+router.get('/health', (req: Request, res: Response) => {
+  return res.status(200).json({
+    status: 'success',
+    message: 'Auth service is healthy'
+  });
 });
 
 // Protected route example

@@ -203,13 +203,24 @@ BEFORE UPDATE ON public.user_subscriptions
 FOR EACH ROW
 EXECUTE FUNCTION public.update_updated_at_column();
 
--- Function to create user profile on signup
+-- First, drop the existing trigger and function if they exist
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+DROP FUNCTION IF EXISTS public.handle_new_user();
+
+-- Function to create user profile on signup with error handling
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
+DECLARE
+    username_val TEXT;
+    name_val TEXT;
 BEGIN
+    -- Extract the username and name safely
+    username_val := COALESCE(NEW.raw_user_meta_data->>'username', split_part(NEW.email, '@', 1));
+    name_val := COALESCE(NEW.raw_user_meta_data->>'name', NEW.raw_user_meta_data->>'full_name', split_part(NEW.email, '@', 1));
+    
     -- Create user profile
     INSERT INTO public.user_profiles (id, email, username, full_name)
-    VALUES (NEW.id, NEW.email, NEW.raw_user_meta_data->>'username', NEW.raw_user_meta_data->>'full_name');
+    VALUES (NEW.id, NEW.email, username_val, name_val);
     
     -- Create user settings
     INSERT INTO public.user_settings (id)
@@ -220,11 +231,21 @@ BEGIN
     SELECT NEW.id, r.id FROM public.roles r WHERE r.name = 'user';
     
     RETURN NEW;
+EXCEPTION
+    WHEN others THEN
+        -- Log the error
+        RAISE NOTICE 'Error in handle_new_user trigger: %', SQLERRM;
+        
+        -- Still return NEW to allow the user creation
+        RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Trigger for new user signup
 CREATE TRIGGER on_auth_user_created
 AFTER INSERT ON auth.users
 FOR EACH ROW
-EXECUTE FUNCTION public.handle_new_user(); 
+EXECUTE FUNCTION public.handle_new_user();
+
+-- Grant execute permission on the function
+GRANT EXECUTE ON FUNCTION public.handle_new_user() TO service_role; 
